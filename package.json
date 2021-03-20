@@ -13,7 +13,10 @@
     "rebuild": "npm run clean && npm run build",
     "clean": "lb-clean src/types dist *.tsbuildinfo .eslintcache",
     "build:solidity": "hardhat compile",
-    "start:hardhat": "hardhat node"
+    "start:hardhat": "hardhat node",
+    "prettier:cli": "lb-prettier \"**/*.ts\" \"**/*.js\" \"**/*.md\" \"**/*.sol\" --loglevel warn",
+    "prettier:check": "npm run prettier:cli -- --check",
+    "prettier:fix": "npm run prettier:cli -- --write"
   },
   "repository": {
     "type": "git",
@@ -48,6 +51,7 @@
     "@types/mocha": "^8.2.1",
     "@types/node": "^10.17.55",
     "hardhat": "^2.1.1",
+    "prettier-plugin-solidity": "^1.0.0-beta.5",
     "source-map-support": "^0.5.19",
     "truffle-hdwallet-provider": "^1.0.17",
     "typechain": "^4.0.3",

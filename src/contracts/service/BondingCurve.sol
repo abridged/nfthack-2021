@@ -17,7 +17,7 @@ contract BondingCurve {
     uint256 public transactionFeeAs1PctDenom = 4; // used to keep fee calculations as integers
     uint256 public tokenBWCWeiLockup = 1e21; // 1000 tokens will stay locked in the contract
 
-    constructor(string memory _name, string memory _symbol) public {
+    constructor(string memory _name, string memory _symbol) {
         erc20Token = new CollabLandERC20Mintable(_name, _symbol);
         owner = msg.sender;
     }
@@ -139,6 +139,7 @@ contract BondingCurve {
     }
 
     // FALLBACK
+    // fallback() external payable {}
 
-    fallback() external payable {}
+    receive() external payable {}
 }

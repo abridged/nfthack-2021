@@ -3,25 +3,25 @@
 // This file is licensed under the MIT License.
 // License text available at https://opensource.org/licenses/MIT
 
-import { BigNumber } from "@ethersproject/bignumber";
-import { Contract } from "@ethersproject/contracts";
-import { Wallet } from "@ethersproject/wallet";
-import { expect } from "@loopback/testlab";
-import "@nomiclabs/hardhat-ethers";
-import { ethers } from "hardhat";
+import {BigNumber} from '@ethersproject/bignumber';
+import {Contract} from '@ethersproject/contracts';
+import {Wallet} from '@ethersproject/wallet';
+import {expect} from '@loopback/testlab';
+import '@nomiclabs/hardhat-ethers';
+import {ethers} from 'hardhat';
 
-describe("CollabLandERC20Factory", function () {
+describe('CollabLandERC20Factory', function () {
   let erc20: Contract;
 
-  it("deploys CollabLandERC20Mintable contract", async function () {
-    const Factory = await ethers.getContractFactory("CollabLandERC20Mintable");
-    erc20 = await Factory.deploy("TestToken", "TT");
+  it('deploys CollabLandERC20Mintable contract', async function () {
+    const Factory = await ethers.getContractFactory('CollabLandERC20Mintable');
+    erc20 = await Factory.deploy('TestToken', 'TT');
 
     await erc20.deployed();
 
     const deployer = await erc20.signer.getAddress();
-    expect(await erc20.name()).to.eql("TestToken");
-    expect(await erc20.symbol()).to.eql("TT");
+    expect(await erc20.name()).to.eql('TestToken');
+    expect(await erc20.symbol()).to.eql('TT');
     const balance: BigNumber = await erc20.balanceOf(deployer);
     expect(balance.toNumber()).to.eql(0);
 

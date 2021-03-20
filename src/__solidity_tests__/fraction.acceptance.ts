@@ -3,21 +3,16 @@
 // This file is licensed under the MIT License.
 // License text available at https://opensource.org/licenses/MIT
 
-import { BigNumber } from "@ethersproject/bignumber";
-import { expect } from "@loopback/testlab";
-import "@nomiclabs/hardhat-ethers";
-import { Signer } from "crypto";
-import { ethers } from "hardhat";
-import { getSigner } from "../contract-utils";
-import { DEPLOYER, USER1, USER2 } from "../helper";
-import {
-  CollabLandERC20Mintable__factory,
-  Fraction,
-  Fraction__factory,
-} from "../types";
-import { CollabLandERC721 } from "../types/CollabLandERC721";
+import {BigNumber} from '@ethersproject/bignumber';
+import {expect} from '@loopback/testlab';
+import '@nomiclabs/hardhat-ethers';
+import {ethers} from 'hardhat';
+import {getSigner} from '../contract-utils';
+import {DEPLOYER, USER1, USER2} from '../helper';
+import {CollabLandERC20Mintable__factory, Fraction} from '../types';
+import {CollabLandERC721} from '../types/CollabLandERC721';
 
-describe("Fraction", function () {
+describe('Fraction', function () {
   const user1 = getSigner(USER1, ethers.provider);
   const user2 = getSigner(USER2, ethers.provider);
   const deployer = getSigner(DEPLOYER, ethers.provider);
@@ -25,22 +20,22 @@ describe("Fraction", function () {
   let erc721: CollabLandERC721;
   let fraction: Fraction;
 
-  it("deploys CollabLandERC721 contract", async function () {
+  it('deploys CollabLandERC721 contract', async function () {
     const Factory = await ethers.getContractFactory(
-      "CollabLandERC721",
-      deployer
+      'CollabLandERC721',
+      deployer,
     );
     erc721 = (await Factory.deploy(
-      "TestNFT",
-      "TNFT",
-      "https://api.collab.land/nft-contracts"
+      'TestNFT',
+      'TNFT',
+      'https://api.collab.land/nft-contracts',
     )) as CollabLandERC721;
 
     await erc721.deployed();
 
     const deployerAddress = await erc721.signer.getAddress();
-    expect(await erc721.name()).to.eql("TestNFT");
-    expect(await erc721.symbol()).to.eql("TNFT");
+    expect(await erc721.name()).to.eql('TestNFT');
+    expect(await erc721.symbol()).to.eql('TNFT');
     const balance: BigNumber = await erc721.balanceOf(deployerAddress);
     expect(balance.toNumber()).to.eql(0);
 
@@ -50,12 +45,12 @@ describe("Fraction", function () {
     expect(userBalance.toNumber()).to.eql(2);
   });
 
-  it("deploys Fraction contract", async function () {
-    const Factory = await ethers.getContractFactory("Fraction", deployer);
+  it('deploys Fraction contract', async function () {
+    const Factory = await ethers.getContractFactory('Fraction', deployer);
     fraction = (await Factory.deploy(
       erc721.address,
-      "TestFraction",
-      "TF"
+      'TestFraction',
+      'TF',
     )) as Fraction;
 
     await fraction.deployed();
@@ -71,7 +66,7 @@ describe("Fraction", function () {
     for (let i = 0; i < balance.toNumber(); i++) {
       const tokenId: BigNumber = await userERC721.tokenOfOwnerByIndex(
         user1.address,
-        i
+        i,
       );
       await userERC721.approve(fraction.address, tokenId);
       tokenIds.push(tokenId);
@@ -86,14 +81,14 @@ describe("Fraction", function () {
     */
   });
 
-  it("buys tokens from the bonding curve", async () => {
+  it('buys tokens from the bonding curve', async () => {
     const userFraction = fraction.connect(user2);
     const value = BigNumber.from(10).mul(BigNumber.from(10).pow(18));
     await userFraction.buyTokens({
       value,
     });
     const erc20 = await getERC20Contract();
-    const balance = (await erc20.balanceOf(user2.address));
+    const balance = await erc20.balanceOf(user2.address);
     expect(balance.toNumber()).to.be.a.Number();
   });
 

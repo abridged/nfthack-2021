@@ -9,7 +9,7 @@ contract Fraction is BondingCurve {
     ERC721 public nft;
     bool public locked = false;
 
-    event Sharding(address nft, string name, string symbol, uint256 total);
+    event Fungified(address nft, string name, string symbol, uint256 total);
 
     constructor(
         ERC721 _nft,
@@ -19,6 +19,10 @@ contract Fraction is BondingCurve {
         nft = _nft;
     }
 
+    /**
+     * @param _nftids - An array of NFT ids
+     * @param _total
+     */
     function fungify(uint256[] memory _nftids, uint256 _total) public virtual {
         require(locked == false);
 
@@ -37,11 +41,12 @@ contract Fraction is BondingCurve {
         );
         */
 
+        // (bool success, bytes memory result) = address(this).delegatecall(abi.encodeWithSignature("buyTokens()"));
         // this.buyTokens{value: _total * (10**uint256(erc20Token.decimals()))}();
 
         locked = true;
 
-        emit Sharding(
+        emit Fungified(
             address(nft),
             erc20Token.name(),
             erc20Token.symbol(),
