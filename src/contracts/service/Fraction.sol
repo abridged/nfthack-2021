@@ -10,17 +10,14 @@ contract Fraction is BondingCurve {
 
     event Fungified(address nft, string name, string symbol);
 
-    constructor(
-        string memory _name,
-        string memory _symbol
-    ) BondingCurve(_name, _symbol) {
-    }
+    constructor(string memory _name, string memory _symbol)
+        BondingCurve(_name, _symbol)
+    {}
 
     /**
      * @param _nftids - An array of NFT ids
      */
-    function fungify(
-        ERC721 _nft, uint256[] memory _nftids) public virtual {
+    function fungify(ERC721 _nft, uint256[] memory _nftids) public virtual {
         require(locked == false);
 
         for (uint256 i = 0; i < _nftids.length; i++) {
@@ -43,10 +40,6 @@ contract Fraction is BondingCurve {
 
         locked = true;
 
-        emit Fungified(
-            address(_nft),
-            erc20Token.name(),
-            erc20Token.symbol()
-        );
+        emit Fungified(address(_nft), erc20Token.name(), erc20Token.symbol());
     }
 }
