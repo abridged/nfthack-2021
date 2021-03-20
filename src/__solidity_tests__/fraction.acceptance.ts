@@ -73,7 +73,7 @@ describe('Fraction', function () {
     }
 
     const userFraction = fraction.connect(user1);
-    await userFraction.fungify(tokenIds, 10);
+    await userFraction.fungify(tokenIds);
     /*
     const erc20 = await getERC20Contract();
     const total = await erc20.totalSupply();

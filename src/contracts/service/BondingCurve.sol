@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
 
+// CREDIT: https://github.com/alexanvl/bloccwarz/blob/master/contracts/BloccWarz.sol
+
 pragma solidity ^0.7.0;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
