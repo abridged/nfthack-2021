@@ -30,10 +30,14 @@ contract Fraction is BondingCurve {
             );
         }
 
+        /*
         erc20Token.mint(
             msg.sender,
             _total * (10**uint256(erc20Token.decimals()))
         );
+        */
+
+        // this.buyTokens{value: _total * (10**uint256(erc20Token.decimals()))}();
 
         locked = true;
 

@@ -6,20 +6,30 @@
 import { BigNumber } from "@ethersproject/bignumber";
 import { expect } from "@loopback/testlab";
 import "@nomiclabs/hardhat-ethers";
+import { Signer } from "crypto";
 import { ethers } from "hardhat";
 import { getSigner } from "../contract-utils";
-import { DEPLOYER, USER1 } from "../helper";
-import { CollabLandERC20Mintable__factory, Fraction, Fraction__factory } from "../types";
+import { DEPLOYER, USER1, USER2 } from "../helper";
+import {
+  CollabLandERC20Mintable__factory,
+  Fraction,
+  Fraction__factory,
+} from "../types";
 import { CollabLandERC721 } from "../types/CollabLandERC721";
 
 describe("Fraction", function () {
-  const user = getSigner(USER1, ethers.provider);
+  const user1 = getSigner(USER1, ethers.provider);
+  const user2 = getSigner(USER2, ethers.provider);
   const deployer = getSigner(DEPLOYER, ethers.provider);
 
   let erc721: CollabLandERC721;
+  let fraction: Fraction;
 
   it("deploys CollabLandERC721 contract", async function () {
-    const Factory = await ethers.getContractFactory("CollabLandERC721", deployer);
+    const Factory = await ethers.getContractFactory(
+      "CollabLandERC721",
+      deployer
+    );
     erc721 = (await Factory.deploy(
       "TestNFT",
       "TNFT",
@@ -34,15 +44,15 @@ describe("Fraction", function () {
     const balance: BigNumber = await erc721.balanceOf(deployerAddress);
     expect(balance.toNumber()).to.eql(0);
 
-    await erc721.mint(user.address);
-    await erc721.mint(user.address);
-    const userBalance = await erc721.balanceOf(user.address);
+    await erc721.mint(user1.address);
+    await erc721.mint(user1.address);
+    const userBalance = await erc721.balanceOf(user1.address);
     expect(userBalance.toNumber()).to.eql(2);
   });
 
   it("deploys Fraction contract", async function () {
     const Factory = await ethers.getContractFactory("Fraction", deployer);
-    const fraction = (await Factory.deploy(
+    fraction = (await Factory.deploy(
       erc721.address,
       "TestFraction",
       "TF"
@@ -50,30 +60,45 @@ describe("Fraction", function () {
 
     await fraction.deployed();
 
-    const userERC721 = erc721.connect(user);
+    const userERC721 = erc721.connect(user1);
 
     // How many tokens does the receiver have?
-    const balance: BigNumber = await userERC721.balanceOf(user.address);
+    const balance: BigNumber = await userERC721.balanceOf(user1.address);
     expect(balance.toNumber()).to.eql(2);
 
     // Enumerate all token ids owned by the receiver
     const tokenIds: BigNumber[] = [];
     for (let i = 0; i < balance.toNumber(); i++) {
       const tokenId: BigNumber = await userERC721.tokenOfOwnerByIndex(
-        user.address,
+        user1.address,
         i
       );
       await userERC721.approve(fraction.address, tokenId);
       tokenIds.push(tokenId);
     }
 
-    const userFraction = fraction.connect(user);
-    await userFraction.fungify(tokenIds, 1000);
-    const erc20 = await userFraction.erc20Token();
-    const total = await CollabLandERC20Mintable__factory.connect(
-      erc20,
-      user
-    ).totalSupply();
-    expect(total.eq(BigNumber.from(1000).mul(BigNumber.from(10).pow(18))));
+    const userFraction = fraction.connect(user1);
+    await userFraction.fungify(tokenIds, 10);
+    /*
+    const erc20 = await getERC20Contract();
+    const total = await erc20.totalSupply();
+    expect(total).to.eql(BigNumber.from(10).mul(BigNumber.from(10).pow(18)));
+    */
   });
+
+  it("buys tokens from the bonding curve", async () => {
+    const userFraction = fraction.connect(user2);
+    const value = BigNumber.from(10).mul(BigNumber.from(10).pow(18));
+    await userFraction.buyTokens({
+      value,
+    });
+    const erc20 = await getERC20Contract();
+    const balance = (await erc20.balanceOf(user2.address));
+    expect(balance.toNumber()).to.be.a.Number();
+  });
+
+  async function getERC20Contract() {
+    const erc20 = await fraction.erc20Token();
+    return CollabLandERC20Mintable__factory.connect(erc20, fraction.signer);
+  }
 });
