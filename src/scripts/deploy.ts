@@ -9,6 +9,7 @@ import path from "path";
 import { ContractAddresses, getSigner } from "../contract-utils";
 import { DEPLOYER, DEPLOYER_PRIVATE_KEY } from "../helper";
 import { ContractDeployServiceClient } from "../services";
+import { CollabLandERC721__factory } from "../types/factories/CollabLandERC721__factory";
 
 async function main() {
   let signer = DEPLOYER;
@@ -26,7 +27,13 @@ async function main() {
   const deployer = new ContractDeployServiceClient(signer);
 
   let addresses: Record<string, ContractAddresses> = {};
-  const contractAddresses = await deployer.deploy(addresses, "TestToken", "TT");
+  await deployer.deployContract(
+    CollabLandERC721__factory,
+    "TestNFT",
+    "TNFT",
+    "https://api.collab.land/nft-tokens"
+  );
+  await deployer.deploy(addresses, "TestToken", "TT");
 
   fs.writeFileSync(
     path.join(__dirname, "../contract-addresses.json"),
