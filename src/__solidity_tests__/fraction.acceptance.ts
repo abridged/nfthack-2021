@@ -47,11 +47,7 @@ describe('Fraction', function () {
 
   it('deploys Fraction contract', async function () {
     const Factory = await ethers.getContractFactory('Fraction', deployer);
-    fraction = (await Factory.deploy(
-      erc721.address,
-      'TestFraction',
-      'TF',
-    )) as Fraction;
+    fraction = (await Factory.deploy('TestFraction', 'TF')) as Fraction;
 
     await fraction.deployed();
 
@@ -73,7 +69,7 @@ describe('Fraction', function () {
     }
 
     const userFraction = fraction.connect(user1);
-    await userFraction.fungify(tokenIds);
+    await userFraction.fungify(erc721.address, tokenIds);
     /*
     const erc20 = await getERC20Contract();
     const total = await erc20.totalSupply();

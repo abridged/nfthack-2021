@@ -6,29 +6,27 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "./BondingCurve.sol";
 
 contract Fraction is BondingCurve {
-    ERC721 public nft;
     bool public locked = false;
 
     event Fungified(address nft, string name, string symbol);
 
     constructor(
-        ERC721 _nft,
         string memory _name,
         string memory _symbol
     ) BondingCurve(_name, _symbol) {
-        nft = _nft;
     }
 
     /**
      * @param _nftids - An array of NFT ids
      */
-    function fungify(uint256[] memory _nftids) public virtual {
+    function fungify(
+        ERC721 _nft, uint256[] memory _nftids) public virtual {
         require(locked == false);
 
         for (uint256 i = 0; i < _nftids.length; i++) {
-            nft.transferFrom(msg.sender, address(this), _nftids[i]);
+            _nft.transferFrom(msg.sender, address(this), _nftids[i]);
             require(
-                nft.ownerOf(_nftids[i]) == address(this),
+                _nft.ownerOf(_nftids[i]) == address(this),
                 "nft transfer failed"
             );
         }
@@ -46,7 +44,7 @@ contract Fraction is BondingCurve {
         locked = true;
 
         emit Fungified(
-            address(nft),
+            address(_nft),
             erc20Token.name(),
             erc20Token.symbol()
         );
