@@ -1,0 +1,13 @@
+node_modules
+npm-debug.log
+.DS_Store
+coverage
+.nyc_output
+/dist
+*.tsbuildinfo
+
+# ESLint cache
+.eslintcache
+
+/src/types/
+
