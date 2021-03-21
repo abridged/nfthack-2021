@@ -10,7 +10,7 @@ import {Wallet} from 'ethers';
 import {ethers} from 'hardhat';
 import {getSigner} from '../contract-utils';
 import {DEPLOYER, USER1, USER2} from '../helper';
-import {CollabLandERC20Mintable__factory, Fraction} from '../types';
+import {BondingCurve, BondingCurve__factory, Fraction, Moloch} from '../types';
 import {CollabLandERC721} from '../types/CollabLandERC721';
 
 describe('Fraction', () => {
@@ -19,6 +19,8 @@ describe('Fraction', () => {
   const deployer = getSigner(DEPLOYER, ethers.provider);
 
   let erc721: CollabLandERC721;
+  let curve: BondingCurve;
+  let moloch: Moloch;
   let fraction: Fraction;
 
   it('deploys CollabLandERC721 contract', async () => {
@@ -46,9 +48,30 @@ describe('Fraction', () => {
     expect(userBalance.toNumber()).to.eql(2);
   });
 
+  it('deploys BondingCurve contract', async () => {
+    const Factory = await ethers.getContractFactory('BondingCurve', deployer);
+    curve = (await Factory.deploy('TestNFT', 'TNFT')) as BondingCurve;
+  });
+
+  it('deploys Moloch contract', async () => {
+    const Factory = await ethers.getContractFactory('Moloch', deployer);
+    moloch = (await Factory.deploy(
+      DEPLOYER.address, // _summoner
+      [curve.address],
+      BigNumber.from(17280), // _periodDuration
+      BigNumber.from(35), // _votingPeriodLength
+      BigNumber.from(35), // _gracePeriodLength
+      BigNumber.from(10).mul(BigNumber.from(10).pow(18)), // _proposalDeposit
+      BigNumber.from(3), // _dilutionBound
+      BigNumber.from(1000), // _processingReward
+    )) as Moloch;
+  });
+
   it('deploys Fraction contract', async () => {
     const Factory = await ethers.getContractFactory('Fraction', deployer);
-    fraction = (await Factory.deploy('TestFraction', 'TF')) as Fraction;
+    fraction = (await Factory.deploy(curve.address, moloch.address, {
+      gasLimit: BigNumber.from('8000000'),
+    })) as Fraction;
 
     await fraction.deployed();
 
@@ -56,19 +79,20 @@ describe('Fraction', () => {
   });
 
   it('buys tokens from the bonding curve', async () => {
-    const userFraction = fraction.connect(user2);
     const value = BigNumber.from(10).mul(BigNumber.from(10).pow(18));
-    await userFraction.buyTokens({
+    const curve = await getBondingCurve(user2);
+    await curve.buyTokens({
       value,
+      gasLimit: BigNumber.from('100000'),
     });
-    const erc20 = await getERC20Contract();
-    const balance = await erc20.balanceOf(user2.address);
+
+    const balance = await curve.balanceOf(user2.address);
     expect(balance.toNumber()).to.be.a.Number();
   });
 
-  async function getERC20Contract() {
-    const erc20 = await fraction.erc20Token();
-    return CollabLandERC20Mintable__factory.connect(erc20, fraction.signer);
+  async function getBondingCurve(signer: Wallet) {
+    const curve = await fraction.curve();
+    return BondingCurve__factory.connect(curve, signer);
   }
 
   async function contributeNFTs(owner: Wallet) {

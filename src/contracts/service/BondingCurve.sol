@@ -8,21 +8,20 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "../token/ERC20/CollabLandERC20Mintable.sol";
 
-contract BondingCurve {
+contract BondingCurve is CollabLandERC20Mintable {
     using SafeMath for uint256;
     address payable public owner;
 
     bool public halted;
 
-    // Financial
-    CollabLandERC20Mintable public erc20Token;
     uint256 public poolBalance = 0;
     uint256 public minTokenTransactionWei = 400; // enforce a minimum purchase/sale amount
     uint256 public transactionFeeAs1PctDenom = 4; // used to keep fee calculations as integers
     uint256 public tokenBWCWeiLockup = 1e21; // 1000 tokens will stay locked in the contract
 
-    constructor(string memory _name, string memory _symbol) {
-        erc20Token = new CollabLandERC20Mintable(_name, _symbol);
+    constructor(string memory _name, string memory _symbol)
+        CollabLandERC20Mintable(_name, _symbol)
+    {
         owner = msg.sender;
     }
 
@@ -42,14 +41,14 @@ contract BondingCurve {
         // Determine how many tokens to be minted
         // f(x) = 0.001x
         // F(x) = (x^2)/2000 + C
-        // purchaseWei = ((erc20Token.totalSupply() + tokensMinted)^2)/2000 - poolBalance
-        // tokensMinted = sqrt(2000 * (purchaseWei + poolBalance)) - erc20Token.totalSupply()
+        // purchaseWei = ((totalSupply() + tokensMinted)^2)/2000 - poolBalance
+        // tokensMinted = sqrt(2000 * (purchaseWei + poolBalance)) - totalSupply()
         uint256 tokensMinted =
             SafeMath.sub(
                 sqrt(
                     SafeMath.mul(2000, SafeMath.add(purchaseWei, poolBalance))
                 ),
-                erc20Token.totalSupply()
+                totalSupply()
             );
         return (tokensMinted, purchaseWei);
     }
@@ -63,7 +62,7 @@ contract BondingCurve {
 
         (uint256 tokensMinted, uint256 purchaseWei) = previewBuy(msg.value);
         // mint tokens for sender
-        erc20Token.mint(msg.sender, tokensMinted);
+        _mint(msg.sender, tokensMinted);
         // incerement pool balance
         poolBalance = SafeMath.add(poolBalance, purchaseWei);
     }
@@ -76,9 +75,8 @@ contract BondingCurve {
         // Calculate wei value of tokens for sale
         // f(x) = 0.001x
         // F(x) = (x^2)/2000 + C
-        // salePriceWei = poolBalance - ((erc20Token.totalSupply() - _tokensBWCWei)^2)/2000
-        uint256 targetTokenSupply =
-            SafeMath.sub(erc20Token.totalSupply(), _tokensBWCWei);
+        // salePriceWei = poolBalance - ((totalSupply() - _tokensBWCWei)^2)/2000
+        uint256 targetTokenSupply = SafeMath.sub(totalSupply(), _tokensBWCWei);
         uint256 salePriceWei =
             SafeMath.sub(
                 poolBalance,
@@ -106,20 +104,12 @@ contract BondingCurve {
     function sellTokens(uint256 _tokensBWCWei) public payable {
         uint256 sellerBalanceWei = previewSell(_tokensBWCWei);
         // transfer the tokens
-        (bool result, bytes memory data) = address(erc20Token).delegatecall(
-            abi.encodeWithSignature(
-                "increaseAllowance(address,uint256)",
-                address(this),
-                _tokensBWCWei
-            )
-        );
-
         require(
-            erc20Token.transferFrom(msg.sender, address(this), _tokensBWCWei),
+            transferFrom(msg.sender, address(this), _tokensBWCWei),
             "ERC-20 transferFrom failed"
         );
         // Burn tokens
-        erc20Token.burn(_tokensBWCWei);
+        _burn(msg.sender, _tokensBWCWei);
         // Pay seller
         msg.sender.transfer(sellerBalanceWei);
         // update pool balance
@@ -138,13 +128,11 @@ contract BondingCurve {
     function withdrawTokens(uint256 _tokensBWCWei) public onlyOwner {
         // Owner can withdraw tokens collected by the contract above the lockup amount
         require(
-            erc20Token.balanceOf(address(this)) > tokenBWCWeiLockup,
+            balanceOf(address(this)) > tokenBWCWeiLockup,
             "Not enough tokens locked up"
         );
-        require(
-            erc20Token.transfer(owner, _tokensBWCWei),
-            "Contract has not enough tokens for withdraw"
-        );
+
+        _transfer(msg.sender, owner, _tokensBWCWei);
     }
 
     // UTIL

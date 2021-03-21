@@ -43,7 +43,6 @@
     "cli-ux": "^5.5.1",
     "ethers": "^5.0.31",
     "inquirer": "^7.3.3",
-    "moloch": "Moloch-Mystics/moloch-v3",
     "tslib": "^2.0.0"
   },
   "devDependencies": {

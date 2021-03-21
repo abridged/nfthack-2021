@@ -1,11 +1,15 @@
-// SPDX-License-Identifier: MIT
-
 pragma solidity ^0.7.0;
+// SPDX-License-Identifier: MIT
+import "./Moloch.sol";
 
-import "moloch/contracts/Moloch.sol";
+contract MolochSummoner {
+    Moloch private M;
 
-contract CollabLandDAO is Moloch {
-    constructor(
+    address[] public Molochs;
+
+    event Summoned(address indexed M, address indexed _summoner);
+
+    function summonMoloch(
         address _summoner,
         address[] memory _approvedTokens,
         uint256 _periodDuration,
@@ -14,8 +18,8 @@ contract CollabLandDAO is Moloch {
         uint256 _proposalDeposit,
         uint256 _dilutionBound,
         uint256 _processingReward
-    )
-        Moloch(
+    ) public {
+        M = new Moloch(
             _summoner,
             _approvedTokens,
             _periodDuration,
@@ -24,6 +28,14 @@ contract CollabLandDAO is Moloch {
             _proposalDeposit,
             _dilutionBound,
             _processingReward
-        )
-    {}
+        );
+
+        Molochs.push(address(M));
+
+        emit Summoned(address(M), _summoner);
+    }
+
+    function getMolochCount() public view returns (uint256 MolochCount) {
+        return Molochs.length;
+    }
 }

@@ -27,11 +27,11 @@ export async function prepareSmartContracts(signer: Signer) {
   // await MemberContract.link('FlagHelper', lib.address);
   // await ProposalContract.link('FlagHelper', lib.address);
   const member = await new MemberContract__factory(
-    {__$a61a7c95503f568b3ed0cfd9705b76bf22$__: lib.address},
+    {__$c7e5847718f0a044b15d381b98596a9060$__: lib.address},
     signer,
   ).deploy();
   const proposal = await new ProposalContract__factory(
-    {__$a61a7c95503f568b3ed0cfd9705b76bf22$__: lib.address},
+    {__$c7e5847718f0a044b15d381b98596a9060$__: lib.address},
     signer,
   ).deploy();
   const voting = await new VotingContract__factory(signer).deploy();

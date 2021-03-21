@@ -5,12 +5,14 @@ import {DEPLOYER, USER1, USER2} from '../helper';
 import {ContractDeployServiceClient} from '../services';
 import {createDao} from '../services/molochv3-dao-factory';
 import {
+  BondingCurve__factory,
   CollabLandERC20Mintable__factory,
   CollabLandERC721,
   CollabLandERC721__factory,
   Fraction,
   Fraction__factory,
   MemberContract__factory,
+  Moloch__factory,
 } from '../types';
 
 export class DemoCommand extends BaseCommand {
@@ -45,11 +47,30 @@ export class DemoCommand extends BaseCommand {
       'https://api.collab.land/nft-tokens',
     ))!;
 
+    const {contract: curve} = (await deployer.confirmDeploy(
+      addresses,
+      BondingCurve__factory,
+      'UCI',
+      'UCI',
+    ))!;
+
+    const {contract: moloch} = (await deployer.confirmDeploy(
+      addresses,
+      Moloch__factory,
+      DEPLOYER.address, // _summoner
+      [curve.address],
+      BigNumber.from(17280), // _periodDuration
+      BigNumber.from(35), // _votingPeriodLength
+      BigNumber.from(35), // _gracePeriodLength
+      BigNumber.from(10).mul(BigNumber.from(10).pow(18)), // _proposalDeposit
+      BigNumber.from(3), // _dilutionBound
+      BigNumber.from(1000), // _processingReward
+    ))!;
     const {contract: fraction} = (await deployer.confirmDeploy(
       addresses,
       Fraction__factory,
-      'UCI',
-      'UCI',
+      curve.address,
+      moloch.address,
     ))!;
     this.log(this.print(addresses));
 
@@ -113,7 +134,8 @@ export class DemoCommand extends BaseCommand {
 
     const value = BigNumber.from(10).mul(BigNumber.from(10).pow(18));
 
-    const cost = await fraction.previewBuy(value);
+    const curve = await this.getBondingCurve(USER2, fraction);
+    const cost = await curve.previewBuy(value);
     this.log('Tokens to be acquired: %s, Fee: %s', cost[0], cost[1]);
 
     const tokensOwned = await this.buyTokens(USER2, fraction, value);
@@ -124,12 +146,13 @@ export class DemoCommand extends BaseCommand {
 
   async buyTokens(user: Wallet, fraction: Fraction, value: BigNumber) {
     this.log('Buying ERC20 tokens from the bonding curve for %s', user.address);
-    const userFraction = fraction.connect(user);
-    await userFraction.buyTokens({
+
+    const curve = await this.getBondingCurve(user, fraction);
+    await curve.buyTokens({
       value,
+      gasLimit: BigNumber.from('100000'),
     });
-    const erc20 = await this.getERC20Contract(fraction);
-    const balance = await erc20.balanceOf(user.address);
+    const balance = await curve.balanceOf(user.address);
     this.log('ERC20 balance: %d', balance.toNumber());
     return balance;
   }
@@ -141,13 +164,13 @@ export class DemoCommand extends BaseCommand {
     );
     const userFraction = fraction.connect(user);
     await userFraction.sellTokens(value, {gasLimit: BigNumber.from('1000000')});
-    const erc20 = await this.getERC20Contract(fraction);
-    const balance = await erc20.balanceOf(user.address);
+    const curve = await this.getBondingCurve(user, fraction);
+    const balance = await curve.balanceOf(user.address);
     this.log('ERC20 balance: %d', balance.toNumber());
   }
 
-  async getERC20Contract(fraction: Fraction) {
-    const erc20 = await fraction.erc20Token();
-    return CollabLandERC20Mintable__factory.connect(erc20, fraction.signer);
+  async getBondingCurve(signer: Wallet, fraction: Fraction) {
+    const curve = await fraction.curve();
+    return BondingCurve__factory.connect(curve, signer);
   }
 }
