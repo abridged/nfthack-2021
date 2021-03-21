@@ -16,7 +16,8 @@
     "start:hardhat": "hardhat node",
     "prettier:cli": "lb-prettier \"**/*.ts\" \"**/*.js\" \"**/*.md\" \"**/*.sol\" --loglevel warn",
     "prettier:check": "npm run prettier:cli -- --check",
-    "prettier:fix": "npm run prettier:cli -- --write"
+    "prettier:fix": "npm run prettier:cli -- --write",
+    "start": "echo Please run hardhat node with 'npm run start:hardhat'. && node dist/cli demo"
   },
   "repository": {
     "type": "git",
