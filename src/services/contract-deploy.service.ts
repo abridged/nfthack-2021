@@ -44,7 +44,7 @@ export class ContractDeployServiceClient {
   ) {
     const name = factory.name.replace(/__factory$/, '') as ContractName;
     if (await this.confirm(name)) {
-      const contract = await this.deployContract(factory, ...args);
+      const contract = await this.deployContract<T>(factory, ...args);
       addresses[name] = contract.address;
       const transaction = await contract.deployTransaction.wait();
       return {contract, transaction};
@@ -57,6 +57,8 @@ export class ContractDeployServiceClient {
     factory: TypedContractFactory<T>,
     ...args: Parameters<T['deploy']>
   ) {
-    return new factory(this.signer).deploy(...args);
+    return (new factory(this.signer) as T).deploy(...args) as ReturnType<
+      T['deploy']
+    >;
   }
 }

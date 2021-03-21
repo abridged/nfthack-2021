@@ -1,4 +1,3 @@
-
 import {Command} from '@oclif/command';
 import inquirer, {
   Answers,
