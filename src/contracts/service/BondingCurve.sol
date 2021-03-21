@@ -12,6 +12,8 @@ contract BondingCurve {
     using SafeMath for uint256;
     address payable public owner;
 
+    bool public halted;
+
     // Financial
     CollabLandERC20Mintable public erc20Token;
     uint256 public poolBalance = 0;
