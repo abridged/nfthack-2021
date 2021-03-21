@@ -87,9 +87,10 @@ export async function createDao(
   });
   // console.log("\t Gas Used: " + txInfo.receipt.gasUsed);
   const receipt = await txInfo.wait();
-  // console.log(receipt);
-  const daoAddress = (receipt as any).events[0].address;
-  const dao = new Registry__factory().attach(daoAddress);
+  const daoAddress = (receipt as any).events.find(
+    (e: any) => e.event === 'NewDao',
+  ).args[1];
+  const dao = Registry__factory.connect(daoAddress, senderAccount);
   return dao;
 }
 
