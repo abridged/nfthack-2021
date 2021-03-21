@@ -1,13 +1,13 @@
 import {BigNumber, utils, Wallet} from 'ethers';
 import {BaseCommand} from '../base-command';
 import {ContractAddresses} from '../contract-utils';
-import {DEPLOYER, USER1} from '../helper';
+import {DEPLOYER, USER1, USER2} from '../helper';
 import {ContractDeployServiceClient} from '../services';
 import {createDao} from '../services/molochv3-dao-factory';
 import {
+  CollabLandERC20Mintable__factory,
   CollabLandERC721,
   CollabLandERC721__factory,
-  ERC721,
   Fraction,
   Fraction__factory,
   MemberContract__factory,
@@ -110,5 +110,24 @@ export class DemoCommand extends BaseCommand {
     const userFraction = fraction.connect(owner);
     await userFraction.fungify(erc721.address, tokenIds);
     this.log('Two NFT tokens are added to %s', userFraction.address);
+
+    await this.buyTokens(USER2, fraction);
+  }
+
+  async buyTokens(user: Wallet, fraction: Fraction) {
+    this.log('Buying ERC20 tokens from the bonding curve for %s', user.address);
+    const userFraction = fraction.connect(user);
+    const value = BigNumber.from(10).mul(BigNumber.from(10).pow(18));
+    await userFraction.buyTokens({
+      value,
+    });
+    const erc20 = await this.getERC20Contract(fraction);
+    const balance = await erc20.balanceOf(user.address);
+    this.log('ERC20 tokens bought: %d', balance.toNumber());
+  }
+
+  async getERC20Contract(fraction: Fraction) {
+    const erc20 = await fraction.erc20Token();
+    return CollabLandERC20Mintable__factory.connect(erc20, fraction.signer);
   }
 }
