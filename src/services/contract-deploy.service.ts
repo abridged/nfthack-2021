@@ -8,7 +8,6 @@ import {ContractFactory, Signer} from 'ethers';
 import {
   ContractAddresses,
   ContractName,
-  transferOwnership,
   TypedContractFactory,
 } from '../contract-utils';
 import {CollabLandERC20Mintable__factory} from '../types';

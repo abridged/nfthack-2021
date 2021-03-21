@@ -10,10 +10,10 @@ import {expect} from '@loopback/testlab';
 import '@nomiclabs/hardhat-ethers';
 import {ethers} from 'hardhat';
 
-describe('CollabLandERC20Factory', function () {
+describe('CollabLandERC20Factory', () => {
   let erc721: Contract;
 
-  it('deploys CollabLandERC721 contract', async function () {
+  it('deploys CollabLandERC721 contract', async () => {
     const Factory = await ethers.getContractFactory('CollabLandERC721');
     erc721 = await Factory.deploy(
       'TestNFT',

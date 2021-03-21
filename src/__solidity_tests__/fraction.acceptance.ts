@@ -13,7 +13,7 @@ import {DEPLOYER, USER1, USER2} from '../helper';
 import {CollabLandERC20Mintable__factory, Fraction} from '../types';
 import {CollabLandERC721} from '../types/CollabLandERC721';
 
-describe('Fraction', function () {
+describe('Fraction', () => {
   const user1 = getSigner(USER1, ethers.provider);
   const user2 = getSigner(USER2, ethers.provider);
   const deployer = getSigner(DEPLOYER, ethers.provider);
@@ -21,7 +21,7 @@ describe('Fraction', function () {
   let erc721: CollabLandERC721;
   let fraction: Fraction;
 
-  it('deploys CollabLandERC721 contract', async function () {
+  it('deploys CollabLandERC721 contract', async () => {
     const Factory = await ethers.getContractFactory(
       'CollabLandERC721',
       deployer,
@@ -46,7 +46,7 @@ describe('Fraction', function () {
     expect(userBalance.toNumber()).to.eql(2);
   });
 
-  it('deploys Fraction contract', async function () {
+  it('deploys Fraction contract', async () => {
     const Factory = await ethers.getContractFactory('Fraction', deployer);
     fraction = (await Factory.deploy('TestFraction', 'TF')) as Fraction;
 

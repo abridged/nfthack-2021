@@ -27,15 +27,7 @@ export type SolidityMetadata = {
 /**
  * Contract names
  */
-export type ContractName =
-  | 'Ownable'
-  | 'CollabLandERC20Factory'
-  | 'CollabLandERC721Factory'
-  | 'CollabLandERC721'
-  | 'CollabLandERC1155Factory'
-  | 'CollabLandERC1155'
-  | 'CollabLandProxyRegistry'
-  | 'Fraction';
+export type ContractName = string;
 
 export type TypedContractFactory<T extends ContractFactory> = {
   new (signer: Signer): T;

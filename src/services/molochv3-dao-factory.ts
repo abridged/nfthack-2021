@@ -6,38 +6,32 @@ import {DaoFactory__factory} from '../types/factories/DaoFactory__factory';
 import {FinancingContract__factory} from '../types/factories/FinancingContract__factory';
 import {FlagHelper__factory} from '../types/factories/FlagHelper__factory';
 import {ManagingContract__factory} from '../types/factories/ManagingContract__factory';
-import {
-  MemberContract__factory,
-  MemberContractLibraryAddresses,
-} from '../types/factories/MemberContract__factory';
+import {MemberContract__factory} from '../types/factories/MemberContract__factory';
 import {OnboardingContract__factory} from '../types/factories/OnboardingContract__factory';
-import {
-  ProposalContractLibraryAddresses,
-  ProposalContract__factory,
-} from '../types/factories/ProposalContract__factory';
+import {ProposalContract__factory} from '../types/factories/ProposalContract__factory';
 import {RagequitContract__factory} from '../types/factories/RagequitContract__factory';
 import {Registry__factory} from '../types/factories/Registry__factory';
 import {VotingContract__factory} from '../types/factories/VotingContract__factory';
-const GUILD = '0x000000000000000000000000000000000000dead';
-const ESCROW = '0x000000000000000000000000000000000000beef';
-const TOTAL = '0x000000000000000000000000000000000000babe';
-const ETH_TOKEN = '0x0000000000000000000000000000000000000000';
 
-const numberOfShares = BigNumber.from('1000000000000000');
-const sharePrice = BigNumber.from(BigNumber.from('120000000000000000'));
-const remaining = sharePrice.sub(BigNumber.from('50000000000000'));
+export const GUILD = '0x000000000000000000000000000000000000dead';
+export const ESCROW = '0x000000000000000000000000000000000000beef';
+export const TOTAL = '0x000000000000000000000000000000000000babe';
+export const ETH_TOKEN = '0x0000000000000000000000000000000000000000';
 
-async function prepareSmartContracts(
-  memberLib: MemberContractLibraryAddresses,
-  proposalLib: ProposalContractLibraryAddresses,
-  signer: Signer,
-) {
+export const numberOfShares = BigNumber.from('1000000000000000');
+export const sharePrice = BigNumber.from(BigNumber.from('120000000000000000'));
+export const remaining = sharePrice.sub(BigNumber.from('50000000000000'));
+
+export async function prepareSmartContracts(signer: Signer) {
   const lib = await new FlagHelper__factory(signer).deploy();
   // await MemberContract.link('FlagHelper', lib.address);
   // await ProposalContract.link('FlagHelper', lib.address);
-  const member = await new MemberContract__factory(memberLib, signer).deploy();
+  const member = await new MemberContract__factory(
+    {__$a61a7c95503f568b3ed0cfd9705b76bf22$__: lib.address},
+    signer,
+  ).deploy();
   const proposal = await new ProposalContract__factory(
-    proposalLib,
+    {__$a61a7c95503f568b3ed0cfd9705b76bf22$__: lib.address},
     signer,
   ).deploy();
   const voting = await new VotingContract__factory(signer).deploy();
@@ -59,17 +53,11 @@ async function prepareSmartContracts(
   };
 }
 
-async function createDao(
-  memberLib: MemberContractLibraryAddresses,
-  proposalLib: ProposalContractLibraryAddresses,
+export async function createDao(
   overridenModules: Record<string, Contract>,
   senderAccount: Signer,
 ) {
-  const modules = await prepareSmartContracts(
-    memberLib,
-    proposalLib,
-    senderAccount,
-  );
+  const modules = await prepareSmartContracts(senderAccount);
   Object.assign(modules, overridenModules);
   const {
     member,
@@ -98,27 +86,18 @@ async function createDao(
     gasPrice: BigNumber.from('0'),
   });
   // console.log("\t Gas Used: " + txInfo.receipt.gasUsed);
-  const pastEvents = await daoFactory.getPastEvents();
-  const daoAddress = pastEvents[0].returnValues.dao;
+  const receipt = await txInfo.wait();
+  // console.log(receipt);
+  const daoAddress = (receipt as any).events[0].address;
   const dao = new Registry__factory().attach(daoAddress);
   return dao;
 }
 
-async function advanceTime(provider: providers.Web3Provider, time: BigNumber) {
+export async function advanceTime(
+  provider: providers.Web3Provider,
+  time: BigNumber,
+) {
   await provider.send('evm_increaseTime', [time]);
 
   await provider.send('evm_mine', []);
 }
-
-module.exports = {
-  prepareSmartContracts,
-  advanceTime,
-  createDao,
-  GUILD,
-  ESCROW,
-  TOTAL,
-  numberOfShares,
-  sharePrice,
-  remaining,
-  ETH_TOKEN,
-};
