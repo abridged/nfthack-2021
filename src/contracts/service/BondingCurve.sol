@@ -34,19 +34,11 @@ contract BondingCurve {
         _;
     }
 
-    function buyTokens() public payable {
-        // Purchase must be enough wei for contract to collect fee
-        require(
-            msg.value >= minTokenTransactionWei,
-            "Must send minimum transaction amount to buy tokens"
-        );
+    function previewBuy(uint256 value) public view returns (uint256, uint256) {
         // Calculate fee as a fraction of 1%
         uint256 feeWei =
-            SafeMath.div(
-                SafeMath.div(msg.value, 100),
-                transactionFeeAs1PctDenom
-            );
-        uint256 purchaseWei = SafeMath.sub(msg.value, feeWei);
+            SafeMath.div(SafeMath.div(value, 100), transactionFeeAs1PctDenom);
+        uint256 purchaseWei = SafeMath.sub(value, feeWei);
         // Determine how many tokens to be minted
         // f(x) = 0.001x
         // F(x) = (x^2)/2000 + C
@@ -59,13 +51,24 @@ contract BondingCurve {
                 ),
                 erc20Token.totalSupply()
             );
+        return (tokensMinted, purchaseWei);
+    }
+
+    function buyTokens() public payable {
+        // Purchase must be enough wei for contract to collect fee
+        require(
+            msg.value >= minTokenTransactionWei,
+            "Must send minimum transaction amount to buy tokens"
+        );
+
+        (uint256 tokensMinted, uint256 purchaseWei) = previewBuy(msg.value);
         // mint tokens for sender
         erc20Token.mint(msg.sender, tokensMinted);
         // incerement pool balance
         poolBalance = SafeMath.add(poolBalance, purchaseWei);
     }
 
-    function sellTokens(uint256 _tokensBWCWei) public {
+    function previewSell(uint256 _tokensBWCWei) public view returns (uint256) {
         require(
             _tokensBWCWei > 0,
             "Token amount for sale must be greater than 0"
@@ -97,7 +100,20 @@ contract BondingCurve {
                 transactionFeeAs1PctDenom
             );
         uint256 sellerBalanceWei = SafeMath.sub(salePriceWei, feeWei);
+        return sellerBalanceWei;
+    }
+
+    function sellTokens(uint256 _tokensBWCWei) public payable {
+        uint256 sellerBalanceWei = previewSell(_tokensBWCWei);
         // transfer the tokens
+        (bool result, bytes memory data) = address(erc20Token).delegatecall(
+            abi.encodeWithSignature(
+                "increaseAllowance(address,uint256)",
+                address(this),
+                _tokensBWCWei
+            )
+        );
+
         require(
             erc20Token.transferFrom(msg.sender, address(this), _tokensBWCWei),
             "ERC-20 transferFrom failed"

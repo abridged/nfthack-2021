@@ -111,19 +111,39 @@ export class DemoCommand extends BaseCommand {
     await userFraction.fungify(erc721.address, tokenIds);
     this.log('Two NFT tokens are added to %s', userFraction.address);
 
-    await this.buyTokens(USER2, fraction);
+    const value = BigNumber.from(10).mul(BigNumber.from(10).pow(18));
+
+    const cost = await fraction.previewBuy(value);
+    this.log('Tokens to be acquired: %s, Fee: %s', cost[0], cost[1]);
+
+    const tokensOwned = await this.buyTokens(USER2, fraction, value);
+
+    // Now sell half of the tokens
+    // await this.sellTokens(USER2, fraction, tokensOwned.div(2));
   }
 
-  async buyTokens(user: Wallet, fraction: Fraction) {
+  async buyTokens(user: Wallet, fraction: Fraction, value: BigNumber) {
     this.log('Buying ERC20 tokens from the bonding curve for %s', user.address);
     const userFraction = fraction.connect(user);
-    const value = BigNumber.from(10).mul(BigNumber.from(10).pow(18));
     await userFraction.buyTokens({
       value,
     });
     const erc20 = await this.getERC20Contract(fraction);
     const balance = await erc20.balanceOf(user.address);
-    this.log('ERC20 tokens bought: %d', balance.toNumber());
+    this.log('ERC20 balance: %d', balance.toNumber());
+    return balance;
+  }
+
+  async sellTokens(user: Wallet, fraction: Fraction, value: BigNumber) {
+    this.log(
+      'Selling ERC20 tokens from the bonding curve for %s',
+      user.address,
+    );
+    const userFraction = fraction.connect(user);
+    await userFraction.sellTokens(value, {gasLimit: BigNumber.from('1000000')});
+    const erc20 = await this.getERC20Contract(fraction);
+    const balance = await erc20.balanceOf(user.address);
+    this.log('ERC20 balance: %d', balance.toNumber());
   }
 
   async getERC20Contract(fraction: Fraction) {
