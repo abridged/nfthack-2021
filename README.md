@@ -2,6 +2,8 @@
 
 Universal Creator Income: Turn NFTs into a creator economy!
 
+https://hack.ethglobal.co/showcase/universal-creator-income-rect4aqcocaCYXJVK
+
 # Architecture diagram
 
 ![incubator](./incubator.png)
@@ -22,7 +24,7 @@ possible in a few days.
 
 # Team
 
-We're the team behind [collab.land](https://collab.land).
+We're the team behind [Collab.Land](https://collab.land).
 
 - James Young
 - Raymond Feng
